@@ -28,10 +28,15 @@ namespace YellowPanda.Transition {
         }
 
         public void OnSceneLoaded(Scene scene, LoadSceneMode loadMode) {
-            if (sceneToPrepare == null) return;
-            if (sceneToPrepare.Length == 0) return;
+            if ( string.IsNullOrEmpty(sceneToPrepare))   return;
+            
+            Scene prepared = SceneManager.GetSceneByName(sceneToPrepare);
+            if(prepared.buildIndex == -1) //Se não conseguiu achar pelo nome, tenta pelo Path
+            {
+                prepared = SceneManager.GetSceneByPath(sceneToPrepare);
+            }
 
-            if (scene.name == sceneToPrepare) {
+            if (scene.buildIndex == prepared.buildIndex) {
                 if (Transition.overrideTransitionPrefab == null)
                     Instantiate(Transition.defaultTransitionPrefab);
                 else
