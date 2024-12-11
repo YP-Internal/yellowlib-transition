@@ -1,81 +1,85 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
 namespace YellowPanda.Transition {
     public class Transition : MonoBehaviour {
+        public static Transition Instance;
 
         public static Transition defaultTransitionPrefab;
-        public static Transition ST;
         public static Transition overrideTransitionPrefab;
 
         // Parameters
         public bool autoFadeIn = true;
 
         // Components
-        Animator myAnimator;
+        Animator _animator;
 
         // Internal
         bool sameScene, sameSceneAutoIn;
         AsyncOperation loadingScene;
-        TransitionCallback sameSceneCallback;
+        Action sameSceneCallback;
 
-        // Delegates
-        public delegate void TransitionCallback();
+        [Obsolete("Goto is deprecated, please use LoadScene instead.")] //Deprecando porque o nome é feio
+        public static void Goto(string scene, Transition transitionPrefab = null)
+        {
+            LoadScene(scene, transitionPrefab);
+        }
 
-        public static void Goto(string scene, Transition transitionPrefab = null) {
+        public static void LoadScene(string scene, Transition transitionPrefab = null) {
             if (defaultTransitionPrefab == null) {
                 Debug.LogWarning("No default transition set, use Transition.defaultTransitionPrefab to set a default transition");
             }
             overrideTransitionPrefab = transitionPrefab;
 
             // Create if isn't instantiated already
-            if (ST == null) {
+            if (Instance == null) {
                 if (overrideTransitionPrefab == null)
-                    ST = Instantiate(defaultTransitionPrefab);
+                    Instance = Instantiate(defaultTransitionPrefab);
                 else
-                    ST = Instantiate(overrideTransitionPrefab);
+                    Instance = Instantiate(overrideTransitionPrefab);
             }
             // Disable auto fade in for this instance
-            ST.autoFadeIn = false;
-            ST.sameScene = false;
+            Instance.autoFadeIn = false;
+            Instance.sameScene = false;
 
             // Load requested scene
-            ST.loadingScene = SceneManager.LoadSceneAsync(scene);
-            ST.loadingScene.allowSceneActivation = false;
+            Instance.loadingScene = SceneManager.LoadSceneAsync(scene);
+            Instance.loadingScene.allowSceneActivation = false;
             TransitionManager.Instance.PrepareSceneIntro(scene);
 
             // Fade out
-            ST.myAnimator.Play("Out");
+            Instance._animator.Play("Out");
         }
 
-        public static void SameSceneTransition(TransitionCallback callback = null, bool autoIn = true) {
+        public static void SameSceneTransition(Action callback = null, bool autoIn = true) {
             // Create if isn't instantiated already
-            if (ST == null) {
-                ST = Instantiate(defaultTransitionPrefab);
+            if (Instance == null) {
+                Instance = Instantiate(defaultTransitionPrefab);
             }
 
             // Disable auto fade in for this instance
-            ST.autoFadeIn = false;
+            Instance.autoFadeIn = false;
 
             // Assign callback
-            ST.sameSceneCallback = callback;
-            ST.sameSceneAutoIn = autoIn;
-            ST.sameScene = true;
+            Instance.sameSceneCallback = callback;
+            Instance.sameSceneAutoIn = autoIn;
+            Instance.sameScene = true;
 
             // Fade out
-            ST.myAnimator.Play("Out");
+            Instance._animator.Play("Out");
         }
 
         void OnDestroy() {
             // Release reference
-            ST = null;
+            Instance = null;
         }
 
         public static void FadeIn() {
-            if (ST == null) return;
+            if (Instance == null) return;
 
-            ST.myAnimator.Play("In");
+            Instance._animator.Play("In");
         }
 
         public void FadeInDone() {
@@ -98,24 +102,24 @@ namespace YellowPanda.Transition {
             yield return null;
 
             // Fade in
-            myAnimator.Play("In");
+            _animator.Play("In");
         }
 
         void Start() {
             if (autoFadeIn) {
-                myAnimator.Play("In", 0, 0);
+                _animator.Play("In", 0, 0);
             }
         }
 
         void Awake() {
-            if (ST != null && ST != this) {
-                Destroy(ST.gameObject);
+            if (Instance != null && Instance != this) {
+                Destroy(Instance.gameObject);
             }
 
-            ST = this;
+            Instance = this;
 
             // Components
-            myAnimator = GetComponent<Animator>();
+            _animator = GetComponent<Animator>();
         }
     }
 }

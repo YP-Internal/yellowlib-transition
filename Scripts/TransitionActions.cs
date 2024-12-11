@@ -4,8 +4,8 @@ using UnityEngine;
 
 namespace YellowPanda.Transition {
     public class TransitionActions : MonoBehaviour {
-        public void Goto(string scene) {
-            Transition.Goto(scene);
+        public void LoadScene(string scene) {
+            Transition.LoadScene(scene);
         }
 
         public void FadeIn() {
